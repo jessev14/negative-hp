@@ -7,7 +7,7 @@
 
 # Negative HP
  
-Commissioned by Shadoghast#9975.
+Commissioned by Shadoghast.
 
 Negative HP implements tracking negative HP up to an actor's (negative) max HP.
 
