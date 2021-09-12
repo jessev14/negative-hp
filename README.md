@@ -12,5 +12,5 @@ Commissioned by Shadoghast.
 Negative HP implements tracking negative HP up to an actor's (negative) max HP.
 
 ## Compatibility
-* Tidy5eSheet
+* Tidy5e Sheet
 * MIDI-QoL
