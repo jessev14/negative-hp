@@ -1,5 +1,3 @@
-Commissioned by Shadoghast#9975.
-
 ![All Downloads](https://img.shields.io/github/downloads/jessev14/negative-hp/total?style=for-the-badge)
 
 ![Latest Release Download Count](https://img.shields.io/github/downloads/jessev14/negative-hp/latest/NHP.zip)
@@ -9,3 +7,10 @@ Commissioned by Shadoghast#9975.
 
 # Negative HP
  
+Commissioned by Shadoghast#9975.
+
+Negative HP implements tracking negative HP up to an actor's (negative) max HP.
+
+## Compatibility
+* Tidy5eSheet
+* MIDI-QoL
