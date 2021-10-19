@@ -1,3 +1,5 @@
+import { libWrapper} from "../lib/shim.js";
+
 const moduleName = "negative-hp";
 
 
