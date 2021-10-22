@@ -6,13 +6,16 @@ const moduleName = "negative-hp";
 Hooks.once("init", () => {
 	// Open module API
 	window.NegativeHP = NegativeHP;
+
+	// Register module settings
+	window.NegativeHP.registerSettings();
 });
 
 Hooks.once("setup", () => {
 	// Override Token5e#_drawHP bar to draw negative HP in red
-	libWrapper.register(moduleName, "CONFIG.Token.objectClass.prototype._drawHPBar", window.NegativeHP._drawHPBar, "OVERRIDE");
+	libWrapper.register(moduleName, "CONFIG.Token.objectClass.prototype._drawHPBar", window.NegativeHP._drawHPBar, "MIXED");
 	// Override Actor#applyDamage to re-clamp actor hp between -hp.max and hp.max + hp.tempMax
-	libWrapper.register(moduleName, "CONFIG.Actor.documentClass.prototype.applyDamage", window.NegativeHP.applyDamage, "OVERRIDE");
+	libWrapper.register(moduleName, "CONFIG.Actor.documentClass.prototype.applyDamage", window.NegativeHP.applyDamage, "MIXED");
 });
 
 Hooks.once("ready", () => {
@@ -26,7 +29,20 @@ Hooks.once("ready", () => {
 
 class NegativeHP {
 
-	static _drawHPBar(number, bar, data) {
+	static registerSettings() {
+		game.settings.register(moduleName, "PCmode", {
+			name: "PC Mode",
+			hint: "Negative HP tracking will only be enabled for Player Characters.",
+			config: true,
+			type: Boolean,
+			default: false,
+			onChange: () => window.location.reload()
+		});
+	}
+
+	static _drawHPBar(wrapped, number, bar, data) {
+		if (this.actor.type === "npc" && game.settings.get(moduleName, "PCmode")) return wrapped(number, bar, data);
+
 		// Extract health data
 		let { value, max, temp, tempmax } = this.document.actor.data.data.attributes.hp;
 		let negative = false;
@@ -87,7 +103,9 @@ class NegativeHP {
 		bar.position.set(0, posY);
 	}
 
-	static async applyDamage(amount = 0, multiplier = 1) {
+	static async applyDamage(wrapped, amount = 0, multiplier = 1) {
+		if (this.type === "npc" && game.settings.get(moduleName, "PCmode")) return wrapped(amount, multiplier);
+
 		amount = Math.floor(parseInt(amount) * multiplier);
 		const hp = this.data.data.attributes.hp;
 
@@ -145,7 +163,9 @@ class NegativeHP {
 			const hp = token.actor.data.data.attributes.hp;
 			const value = Math.floor(appliedDamage);
 			const dt = value > 0 ? Math.min(oldTempHP, value) : 0;
-			let newHP = Math.clamped(oldHP - (value - dt), -hp.max, hp.max + (parseInt(hp.tempmax) || 0));
+			let newHP;
+			if (token.actor.type === "npc" && game.settings.get(moduleName, "PCmode")) newHP = Math.clamped(oldHP - (value - dt), 0, hp.max + (parseInt(hp.tempmax) || 0));
+			else newHP = Math.clamped(oldHP - (value - dt), -hp.max, hp.max + (parseInt(hp.tempmax) || 0));
 			hpDamage = hp.value - newHP;
 			hpDamage = Math.abs(hpDamage); // fix for incorrect sign during healing(?)
 
@@ -183,7 +203,8 @@ class NegativeHP {
 					newHP = oldHP - hpDamage;
 				}
 
-				newHP = Math.clamped(newHP, -hp.max, hp.max + (parseInt(hp.tempmax) || 0));
+				if (token.actor.type === "npc" && game.settings.get(moduleName, "PCmode")) newHP = Math.clamped(newHP, 0, hp.max + (parseInt(hp.tempmax) || 0));
+				else newHP = Math.clamped(newHP, -hp.max, hp.max + (parseInt(hp.tempmax) || 0));
 				appliedDamage = reducedAppliedDamage;
 
 				await token.unsetFlag("evasion-class", "reduced");
